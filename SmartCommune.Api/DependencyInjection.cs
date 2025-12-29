@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
+
 using SmartCommune.Api.Configurations;
+
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SmartCommune.Api;

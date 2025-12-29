@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Reflection;
+
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
 
 namespace SmartCommune.Api.Configurations;
 
@@ -14,7 +16,7 @@ public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
         {
             Version = "v1",
             Title = "Quản lý xã API",
-            Description = "Website quản lí công việc đơn vị hành chính cấp xã."
+            Description = "Website quản lí công việc đơn vị hành chính cấp xã.",
         });
 
         // Include XML comments if available
@@ -35,7 +37,7 @@ public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
             Scheme = "Bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Nhập JWT token theo định dạng: Bearer {token}"
+            Description = "Nhập JWT token theo định dạng: Bearer {token}",
         });
 
         options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -46,11 +48,11 @@ public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
                     Reference = new OpenApiReference
                     {
                         Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
+                        Id = "Bearer",
+                    },
                 },
                 Array.Empty<string>()
-            }
+            },
         });
     }
 }
