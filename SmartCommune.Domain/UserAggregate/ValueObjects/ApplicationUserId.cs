@@ -13,7 +13,7 @@ public sealed class ApplicationUserId : ValueObject
 
     public static ApplicationUserId CreateUnique()
     {
-        return new ApplicationUserId(Guid.NewGuid());
+        return new ApplicationUserId(Guid.CreateVersion7());
     }
 
     public static ApplicationUserId Create(Guid value)
