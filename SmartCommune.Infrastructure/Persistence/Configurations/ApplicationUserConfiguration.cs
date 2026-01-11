@@ -60,5 +60,9 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Navigation(u => u.Permissions)
             .HasField("_permissions")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(u => u.RefreshTokens)
+            .HasField("_refreshTokens")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

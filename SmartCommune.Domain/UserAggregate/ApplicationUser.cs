@@ -9,6 +9,7 @@ namespace SmartCommune.Domain.UserAggregate;
 public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
 {
     private readonly List<UserPermission> _permissions = [];
+    private readonly List<RefreshToken> _refreshTokens = [];
 
 #pragma warning disable CS8618
     private ApplicationUser()
@@ -43,6 +44,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     public RoleId RoleId { get; private set; }
 
     public IReadOnlyCollection<UserPermission> Permissions => _permissions.AsReadOnly();
+    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
     public static ApplicationUser Create(
         string userName,
@@ -85,5 +87,76 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
         {
             _permissions.Remove(permission);
         }
+    }
+
+    /// <summary>
+    /// Thêm Refresh Token mới cho User với số ngày hết hạn được chỉ định.
+    /// </summary>
+    /// <param name="token">Refresh token.</param>
+    /// <param name="expiresDate">Ngày hết hạn.</param>
+    /// <param name="now">Ngày hiện tại.</param>
+    public void AddRefreshToken(string token, DateTime expiresDate, DateTime now)
+    {
+        var refreshToken = RefreshToken.Create(token, expiresDate, now, Id);
+        _refreshTokens.Add(refreshToken);
+    }
+
+    /// <summary>
+    /// Thu hồi (revoke) một refresh token của người dùng.
+    /// </summary>
+    /// <param name="token">Refresh token cần thu hồi.</param>
+    /// <param name="now">Ngày hiện tại.</param>
+    /// <returns>Trả về <c>true</c> nếu refresh token tồn tại và đang còn hiệu lực, và đã được thu hồi thành công;
+    /// trả về <c>false</c> nếu token không tồn tại, đã hết hạn hoặc đã bị thu hồi trước đó.</returns>
+    /// <remarks>
+    /// Việc thu hồi refresh token thường được sử dụng khi:
+    /// <list type="bullet">
+    /// <item><description>Người dùng đăng xuất.</description></item>
+    /// <item><description>Phát hiện hành vi bảo mật bất thường.</description></item>
+    /// <item><description>Thực hiện refresh token rotation.</description></item>
+    /// </list>
+    /// Phương thức này không xóa token khỏi hệ thống mà chỉ đánh dấu thời điểm thu hồi để phục vụ kiểm soát và audit.
+    /// </remarks>
+    public bool RevokeRefreshToken(string token, DateTime now)
+    {
+        var existingToken = _refreshTokens.FirstOrDefault(t => t.Token == token);
+
+        if (existingToken is null || !existingToken.IsActive(now))
+        {
+            return false;
+        }
+
+        existingToken.Revoke(now);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Thực hiện luân chuyển (rotate) refresh token cho người dùng.
+    /// </summary>
+    /// <param name="oldToken">
+    /// Refresh token cũ cần được thu hồi.
+    /// </param>
+    /// <param name="newToken">
+    /// Refresh token mới sẽ được cấp thay thế.
+    /// </param>
+    /// <param name="expiresDate">
+    /// Thời điểm hết hạn của refresh token mới.
+    /// </param>
+    /// <param name="now">
+    /// Ngày hiện tại.
+    /// </param>
+    /// <remarks>
+    /// Refresh token rotation là cơ chế bảo mật, trong đó:
+    /// <list type="number">
+    /// <item><description>Refresh token cũ được thu hồi.</description></item>
+    /// <item><description>Refresh token mới được tạo và gắn với người dùng.</description></item>
+    /// </list>
+    /// Cơ chế này giúp giảm thiểu rủi ro khi refresh token bị lộ và đảm bảo mỗi refresh token chỉ được sử dụng một lần.
+    /// </remarks>
+    public void RotateRefreshToken(string oldToken, string newToken, DateTime expiresDate, DateTime now)
+    {
+        RevokeRefreshToken(oldToken, now);
+        AddRefreshToken(newToken, expiresDate, now);
     }
 }
