@@ -11,8 +11,8 @@ public class DateTimeProvider : IDateTimeProvider
         get
         {
             string timeZoneId = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                                                                ? "SE Asia Standard Time" // Windows
-                                                                : "Asia/Ho_Chi_Minh"; // Linux
+                                                                ? "SE Asia Standard Time" // Windows.
+                                                                : "Asia/Ho_Chi_Minh"; // Linux.
             var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             var vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
 

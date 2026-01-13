@@ -2,6 +2,7 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using SmartCommune.Application.Common.Interfaces.Persistence;
 using SmartCommune.Domain.DossierAggregate;
 using SmartCommune.Domain.DossierAggregate.Entities;
 using SmartCommune.Domain.MenuItemAggregate;
@@ -22,7 +23,9 @@ using SmartCommune.Domain.WorkspaceAggregate.Entities;
 
 namespace SmartCommune.Infrastructure.Persistence;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public class ApplicationDbContext(
+    DbContextOptions<ApplicationDbContext> options)
+    : DbContext(options), IApplicationDbContext
 {
     // User Aggregate.
     public DbSet<ApplicationUser> Users { get; set; } = null!;

@@ -33,6 +33,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
         CreatedAt = createdAt;
         DisableAt = null;
         RoleId = roleId;
+        SecurityStamp = Guid.CreateVersion7();
     }
 
     public string UserName { get; private set; }
@@ -42,6 +43,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     public DateTime CreatedAt { get; private set; }
     public DateTime? DisableAt { get; private set; }
     public RoleId RoleId { get; private set; }
+    public Guid SecurityStamp { get; private set; }
 
     public IReadOnlyCollection<UserPermission> Permissions => _permissions.AsReadOnly();
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
@@ -93,11 +95,15 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     /// Thêm Refresh Token mới cho User với số ngày hết hạn được chỉ định.
     /// </summary>
     /// <param name="token">Refresh token.</param>
-    /// <param name="expiresDate">Ngày hết hạn.</param>
+    /// <param name="expiresDays">Số ngày hết hạn.</param>
     /// <param name="now">Ngày hiện tại.</param>
-    public void AddRefreshToken(string token, DateTime expiresDate, DateTime now)
+    public void AddRefreshToken(string token, int expiresDays, DateTime now)
     {
-        var refreshToken = RefreshToken.Create(token, expiresDate, now, Id);
+        var refreshToken = RefreshToken.Create(
+            token,
+            now.AddDays(expiresDays),
+            now,
+            Id);
         _refreshTokens.Add(refreshToken);
     }
 
@@ -140,8 +146,8 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     /// <param name="newToken">
     /// Refresh token mới sẽ được cấp thay thế.
     /// </param>
-    /// <param name="expiresDate">
-    /// Thời điểm hết hạn của refresh token mới.
+    /// <param name="expiresDays">
+    /// Số ngày hết hạn của refresh token mới.
     /// </param>
     /// <param name="now">
     /// Ngày hiện tại.
@@ -154,9 +160,17 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     /// </list>
     /// Cơ chế này giúp giảm thiểu rủi ro khi refresh token bị lộ và đảm bảo mỗi refresh token chỉ được sử dụng một lần.
     /// </remarks>
-    public void RotateRefreshToken(string oldToken, string newToken, DateTime expiresDate, DateTime now)
+    public void RotateRefreshToken(string oldToken, string newToken, int expiresDays, DateTime now)
     {
         RevokeRefreshToken(oldToken, now);
-        AddRefreshToken(newToken, expiresDate, now);
+        AddRefreshToken(newToken, expiresDays, now);
+    }
+
+    /// <summary>
+    /// Gọi hàm này khi: Đổi mật khẩu, Đổi quyền, User bị khóa...
+    /// </summary>
+    public void RefreshSecurityStamp()
+    {
+        SecurityStamp = Guid.NewGuid();
     }
 }

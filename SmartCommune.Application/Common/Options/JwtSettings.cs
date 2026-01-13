@@ -1,4 +1,4 @@
-﻿namespace SmartCommune.Infrastructure.Authentication;
+﻿namespace SmartCommune.Application.Common.Options;
 
 public class JwtSettings
 {
@@ -8,4 +8,5 @@ public class JwtSettings
     public int ExpiryMinutes { get; init; }
     public string Issuer { get; init; } = string.Empty;
     public string Audience { get; init; } = string.Empty;
+    public int RefreshTokenExpiryDays { get; init; }
 }

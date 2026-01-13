@@ -5,19 +5,21 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+using SmartCommune.Application.Common.Constants;
 using SmartCommune.Application.Common.Interfaces.Authentication;
 using SmartCommune.Application.Common.Interfaces.Services;
+using SmartCommune.Application.Common.Options;
 using SmartCommune.Domain.UserAggregate;
 
 namespace SmartCommune.Infrastructure.Authentication;
 
 public class JwtTokenGenerator(
     IDateTimeProvider dateTimeProvider,
-    IOptions<JwtSettings> jwtSettingOptions)
+    IOptions<JwtSettings> jwtSettingsOption)
     : IJwtTokenGenerator
 {
     private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
-    private readonly JwtSettings _jwtSettings = jwtSettingOptions.Value;
+    private readonly JwtSettings _jwtSettings = jwtSettingsOption.Value;
 
     public string GenerateAccessToken(ApplicationUser user)
     {
@@ -32,7 +34,17 @@ public class JwtTokenGenerator(
             new(JwtRegisteredClaimNames.Name, user.FullName),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
+            new(CustomClaims.SecurityStamp, user.SecurityStamp.ToString()),
         };
+
+        // se xoa sau khi luu permissions vao redis.
+        var permissions = user.Permissions
+            .Select(up => up.Permission.Code)
+            .ToList();
+        foreach (string permission in permissions)
+        {
+            claims.Add(new(CustomClaims.Permissions, permission));
+        }
 
         var securityToken = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
