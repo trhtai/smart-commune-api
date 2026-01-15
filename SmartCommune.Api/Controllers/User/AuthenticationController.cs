@@ -8,6 +8,9 @@ using Microsoft.Extensions.Options;
 
 using SmartCommune.Application.Common.Interfaces.Services;
 using SmartCommune.Application.Common.Options;
+using SmartCommune.Application.Services.User.Authentication.Commands.RefreshToken;
+using SmartCommune.Application.Services.User.Authentication.Commands.RevokeToken;
+using SmartCommune.Application.Services.User.Authentication.Common;
 using SmartCommune.Application.Services.User.Authentication.Queries.Login;
 using SmartCommune.Contracts.User.Authentication;
 
@@ -44,6 +47,28 @@ public class AuthenticationController(
         SetRefreshTokenCookie(authenticationResult.RefreshToken);
 
         return Ok(_mapper.Map<AuthenticationResponse>(authenticationResult));
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var command = new RefreshTokenCommand(request.RefreshToken);
+        var authResult = await _sender.Send(command, HttpContext.RequestAborted);
+
+        return authResult.Match(
+            result => Ok(_mapper.Map<AuthenticationResult>(result)),
+            errors => HandleProblem(errors));
+    }
+
+    [HttpPost("revoke-token")]
+    public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenRequest request)
+    {
+        var command = new RevokeTokenCommand(request.RefreshToken);
+        var result = await _sender.Send(command, HttpContext.RequestAborted);
+
+        return result.Match(
+            success => NoContent(),
+            errors => HandleProblem(errors));
     }
 
     private void SetRefreshTokenCookie(string refreshToken)

@@ -45,7 +45,7 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
     /// Kiểm tra xem token có còn hoạt động hay không.
     /// </summary>
     /// <param name="now">Ngày hiện tại.</param>
-    /// <returns>Trả về true nếu tolen còn hoạt động.</returns>
+    /// <returns>Trả về true nếu token còn hoạt động.</returns>
     public bool IsActive(DateTime now)
     {
         return Revoked == null && !IsExpired(now);
