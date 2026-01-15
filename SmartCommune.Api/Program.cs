@@ -1,4 +1,4 @@
-using Serilog;
+﻿using Serilog;
 
 using SmartCommune.Api;
 using SmartCommune.Api.Common.Constants;
@@ -39,7 +39,13 @@ await app.MigrateDatabaseAsync();
 
 await app.SeedDatabaseAsync();
 
+// Middleware app.UseAuthentication() chỉ làm nhiệm vụ: "Cố gắng định danh người dùng".
+// Nếu request có Token hợp lệ -> Nó set User.Identity.IsAuthenticated = true.
+// Nếu request không có Token (ví dụ: khách vãng lai, hoặc đang gọi API Login/Register) -> Nó cho qua và set User là "Anonymous" (Vô danh, IsAuthenticated = false).
+// Nó không chặn request lại. Việc chặn (trả về 401/403) là nhiệm vụ của app.UseAuthorization() hoặc các Attribute [Authorize] ở Controller.
 app.UseAuthentication();
+
+app.UseMiddleware<SecurityStampMiddleware>();
 
 app.UseAuthorization();
 

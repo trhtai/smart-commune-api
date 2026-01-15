@@ -168,6 +168,20 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     }
 
     /// <summary>
+    /// Hủy toàn bộ phiên đăng nhập của User.
+    /// </summary>
+    /// <param name="now">Ngày hiện tại.</param>
+    public void RevokeAllRefreshTokens(DateTime now)
+    {
+        var activeTokens = _refreshTokens.Where(t => t.IsActive(now)).ToList();
+
+        foreach (var token in activeTokens)
+        {
+            token.Revoke(now);
+        }
+    }
+
+    /// <summary>
     /// Gọi hàm này khi: Đổi mật khẩu, Đổi quyền, User bị khóa...
     /// </summary>
     public void RefreshSecurityStamp()

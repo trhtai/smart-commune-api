@@ -47,7 +47,14 @@ public class RefreshTokenCommandHandler(
         {
             // Token đã bị dùng rồi hoặc hết hạn nhưng lại được gửi lên server:
             // -> Nghi vấn hack hay token đã bị đánh cắp.
-            // -> Có thể revoke toàn bộ token của user này để bảo mật.
+            // -> Có thể revoke toàn bộ token của user này để bảo mật (Thà giết nhầm còn hơn bỏ sót).
+            user.RevokeAllRefreshTokens(_dateTimeProvider.VietNamNow);
+
+            // Kết hợp thêm SecurityStamp.
+            user.RefreshSecurityStamp();
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
             return Errors.Authentication.InvalidCredentials;
         }
 
@@ -55,7 +62,9 @@ public class RefreshTokenCommandHandler(
         var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(user);
         var newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
-        // 4. Thêm Refresh Token.
+        // 4. RevokeToken cũ Thêm Token mới.
+        user.RevokeRefreshToken(request.RefreshToken, _dateTimeProvider.VietNamNow);
+
         user.AddRefreshToken(
             newRefreshToken,
             _jwtSettings.RefreshTokenExpiryDays,
