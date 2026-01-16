@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 using SmartCommune.Application.Common.Constants;
 using SmartCommune.Application.Common.Interfaces.Persistence;
+using SmartCommune.Domain.UserAggregate.ValueObjects;
 
 namespace SmartCommune.Api.Middlewares;
 
@@ -28,7 +29,7 @@ public class SecurityStampMiddleware(RequestDelegate next)
                 // LƯU Ý: Đoạn này sẽ query DB mỗi request.
                 // Sau này áp dụng Redis, bạn sẽ lấy từ Redis thay vì query DB -> Hiệu năng cực nhanh.
                 var userSecurityStamp = await dbContext.Users
-                    .Where(u => u.Id.Value == Guid.Parse(userId))
+                    .Where(u => u.Id == ApplicationUserId.Create(Guid.Parse(userId)))
                     .Select(u => u.SecurityStamp)
                     .FirstOrDefaultAsync();
 

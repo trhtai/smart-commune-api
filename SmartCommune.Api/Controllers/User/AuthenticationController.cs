@@ -50,24 +50,51 @@ public class AuthenticationController(
     }
 
     [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    [AllowAnonymous]
+    public async Task<IActionResult> RefreshToken()
     {
-        var command = new RefreshTokenCommand(request.RefreshToken);
+        // Lấy Refresh Token từ Cookie.
+        var refreshToken = Request.Cookies["refreshToken"];
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Refresh Token is missing from cookie.");
+        }
+
+        // Tiến hành Refresh Token.
+        var command = new RefreshTokenCommand(refreshToken);
         var authResult = await _sender.Send(command, HttpContext.RequestAborted);
 
         return authResult.Match(
-            result => Ok(_mapper.Map<AuthenticationResult>(result)),
+            result => Ok(_mapper.Map<AuthenticationResponse>(result)),
             errors => HandleProblem(errors));
     }
 
     [HttpPost("revoke-token")]
-    public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenRequest request)
+    public async Task<IActionResult> RevokeToken()
     {
-        var command = new RevokeTokenCommand(request.RefreshToken);
+        // Lấy Refresh Token từ Cookie.
+        var refreshToken = Request.Cookies["refreshToken"];
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Refresh Token is missing from cookie.");
+        }
+
+        // Tiến hành Revoke Token.
+        var command = new RevokeTokenCommand(refreshToken);
         var result = await _sender.Send(command, HttpContext.RequestAborted);
 
         return result.Match(
-            success => NoContent(),
+            success =>
+            {
+                Response.Cookies.Delete("refreshToken");
+                return NoContent();
+            },
             errors => HandleProblem(errors));
     }
 
