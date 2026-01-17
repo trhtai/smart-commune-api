@@ -38,25 +38,31 @@ public class RefreshTokenCommandHandler(
 
         var existingRefreshToken = user.RefreshTokens.Single(t => t.Token == request.RefreshToken);
 
-        // 2. (Quan trọng) Kiểm tra token có active không, nếu còn => chưa bị revoke.
-        if (!existingRefreshToken.IsActive(_dateTimeProvider.VietNamNow))
+        // 2. (Quan trọng) Kiểm tra token có active không, nếu không => nghi vấn hack.
+        if (!existingRefreshToken.IsActive())
         {
-            // REFRESH TOKEN RETATION.
-            // Token đã bị dùng rồi hoặc hết hạn nhưng lại được gửi lên server:
-            // -> Nghi vấn hack hay token đã bị đánh cắp.
-            // -> Có thể revoke toàn bộ token của user này để bảo mật (Thà giết nhầm còn hơn bỏ sót).
-            // user.RevokeAllRefreshTokens(_dateTimeProvider.VietNamNow);
-            // Kết hợp thêm SecurityStamp.
-            // user.RefreshSecurityStamp();
-            // await _dbContext.SaveChangesAsync(cancellationToken);
+            // Revoke toàn bộ token của user này để bảo mật.
+            user.RevokeAllRefreshTokens(_dateTimeProvider.VietNamNow);
 
-            // Ở flow bình thường thì việc refresh token hết hạn mà vẫn gửi lên là bình thường,
-            // Vì hết hạn nên mới xin cái mới.
-            // Đơn giản trả về 401 và bắt User login lại.
+            // Kết hợp thêm SecurityStamp.
+            user.RefreshSecurityStamp();
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
             return Errors.Authentication.InvalidCredentials;
         }
 
-        // 3. Generate cặp Token mới.
+        // 3. Kiểm tra token hết hạn.
+        // Ở flow bình thường thì việc refresh token hết hạn mà vẫn gửi lên là bình thường,
+        // Vì hết hạn nên mới xin cái mới.
+        // Đơn giản trả về 401 và bắt User login lại.
+        // Nếu token hết hạn thì sẽ bị Revoke ngay, nếu Refresh Token lại được gửi lên để
+        // xin Access Token 1 lần nữa thì sẽ bị chặn ở bước 2.
+        if (existingRefreshToken.IsExpired(_dateTimeProvider.VietNamNow))
+        {
+            return Errors.Authentication.InvalidCredentials;
+        }
+
+        // 4. Generate Token mới.
         var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(user);
 
         return new AuthenticationResult(

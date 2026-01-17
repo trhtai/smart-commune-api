@@ -18,5 +18,10 @@ public static partial class Errors
             Error.Validation(
                 code: "Authentication.Unauthorized",
                 description: "Người dùng chưa được xác thực.");
+
+        public static readonly Error AccountLocked =
+            Error.Conflict(
+                code: "Authentication.AccountLocked",
+                description: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
     }
 }

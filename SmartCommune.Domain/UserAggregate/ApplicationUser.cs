@@ -47,12 +47,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     public RoleId RoleId { get; private set; }
 
     /// <summary>
-    /// Dùng để cưỡng chế User dù Access Token vẫn còn thời hạn.
-    /// Do Access Token là Stateless nên Server không thể vô hiệu hóa được trừ khi Access Token tự hết hạn.
-    /// Vấn đề là khi User đổi mật khẩu, Admin khóa tài khoản hoặc tài khoản bị lộ cần khóa lại gấp:
-    /// Nếu chỉ Revoke Refresh Token thì chưa đủ vì Access Token có thể còn thời hạn
-    /// => vẫn request được, hacker vẫn phá hoại được trong vài phút đó.
-    /// => Dùng SecurityStamp để cưỡng chế ngay lập tức.
+    /// Dùng để ép User phải xin Access Token mới => có quyền và menu mới.
     /// </summary>
     public Guid SecurityStamp { get; private set; }
 
@@ -116,7 +111,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
             (t.Revoked != null && t.Revoked <= now.AddDays(-30))); // Giữ lại lịch sử trong vòng 30 ngày.
 
         // Giới hạn số lượng token đang active.
-        var activeTokens = _refreshTokens.Where(t => t.IsActive(now)).ToList();
+        var activeTokens = _refreshTokens.Where(t => !t.IsExpired(now) && t.IsActive()).ToList();
 
         if (activeTokens.Count >= MaxActiveSessions)
         {
@@ -157,7 +152,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     {
         var existingToken = _refreshTokens.FirstOrDefault(t => t.Token == token);
 
-        if (existingToken is null || !existingToken.IsActive(now))
+        if (existingToken is null || !existingToken.IsActive())
         {
             return false;
         }
@@ -173,7 +168,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     /// <param name="now">Ngày hiện tại.</param>
     public void RevokeAllRefreshTokens(DateTime now)
     {
-        var activeTokens = _refreshTokens.Where(t => t.IsActive(now)).ToList();
+        var activeTokens = _refreshTokens.Where(t => !t.IsExpired(now) && t.IsActive()).ToList();
 
         foreach (var token in activeTokens)
         {

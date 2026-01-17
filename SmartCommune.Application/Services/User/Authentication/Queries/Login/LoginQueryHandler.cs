@@ -35,10 +35,15 @@ public class LoginQueryHandler(
                 .ThenInclude(up => up.Permission)
             .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
 
-        // 2. Validate User tồn tại.
         if (user is null)
         {
             return Errors.Authentication.InvalidCredentials;
+        }
+
+        // 2. Kiểm tra user có bị khóa không?
+        if (!user.IsActived || user.DisableAt is not null)
+        {
+            return Errors.Authentication.AccountLocked;
         }
 
         // 3. Validate Password.
