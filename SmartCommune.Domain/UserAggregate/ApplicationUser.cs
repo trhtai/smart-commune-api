@@ -183,4 +183,30 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     {
         SecurityStamp = Guid.NewGuid();
     }
+
+    /// <summary>
+    /// Thực hiện khóa tài khoản vĩnh viễn hoặc tạm thời.
+    /// </summary>
+    /// <param name="now">Ngày hiện tại.</param>
+    public void LockAccount(DateTime now)
+    {
+        // 1. Cập nhật trạng thái.
+        IsActived = false;
+        DisableAt = now;
+
+        // 2. Chặn Access Token hiện tại (Ngăn chặn request tiếp theo thông qua Middleware).
+        RefreshSecurityStamp();
+
+        // 3. Chặn khả năng lấy Access Token mới (Ngăn chặn flow Refresh Token).
+        RevokeAllRefreshTokens(now);
+    }
+
+    /// <summary>
+    /// Mở khóa tài khoản.
+    /// </summary>
+    public void UnlockAccount()
+    {
+        IsActived = true;
+        DisableAt = null;
+    }
 }
