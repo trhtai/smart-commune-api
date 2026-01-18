@@ -38,7 +38,7 @@ public class JwtTokenGenerator(
         };
 
         // se xoa sau khi luu permissions vao redis.
-        var permissions = user.Permissions
+        var permissions = user.Role.Permissions
             .Select(up => up.Permission.Code)
             .ToList();
         foreach (string permission in permissions)

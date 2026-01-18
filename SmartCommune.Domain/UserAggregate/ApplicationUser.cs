@@ -1,5 +1,5 @@
 ﻿using SmartCommune.Domain.Common.Models;
-using SmartCommune.Domain.PermissionAggregate.ValueObjects;
+using SmartCommune.Domain.RoleAggregate;
 using SmartCommune.Domain.RoleAggregate.ValueObjects;
 using SmartCommune.Domain.UserAggregate.Entities;
 using SmartCommune.Domain.UserAggregate.ValueObjects;
@@ -10,7 +10,6 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
 {
     private const int MaxActiveSessions = 5; // Tổng số lượng thiết bị đăng nhập có thể có của 1 User.
 
-    private readonly List<UserPermission> _permissions = [];
     private readonly List<RefreshToken> _refreshTokens = [];
 
 #pragma warning disable CS8618
@@ -51,7 +50,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     /// </summary>
     public Guid SecurityStamp { get; private set; }
 
-    public IReadOnlyCollection<UserPermission> Permissions => _permissions.AsReadOnly();
+    public Role Role { get; private set; } = null!;
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
     public static ApplicationUser Create(
@@ -70,31 +69,6 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
             roleId);
 
         return user;
-    }
-
-    /// <summary>
-    /// Thêm quyền vào User.
-    /// </summary>
-    /// <param name="permissionId">Permission Id.</param>
-    public void GrantPermission(PermissionId permissionId)
-    {
-        if (!_permissions.Any(p => p.PermissionId == permissionId))
-        {
-            _permissions.Add(UserPermission.Create(Id, permissionId));
-        }
-    }
-
-    /// <summary>
-    /// Xóa quyền khỏi User.
-    /// </summary>
-    /// <param name="permissionId">Permission Id.</param>
-    public void RemovePermission(PermissionId permissionId)
-    {
-        var permission = _permissions.FirstOrDefault(x => x.PermissionId == permissionId);
-        if (permission != null)
-        {
-            _permissions.Remove(permission);
-        }
     }
 
     /// <summary>

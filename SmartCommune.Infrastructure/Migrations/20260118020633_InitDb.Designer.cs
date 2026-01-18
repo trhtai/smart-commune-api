@@ -12,8 +12,8 @@ using SmartCommune.Infrastructure.Persistence;
 namespace SmartCommune.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260109093700_AddRefreshToken")]
-    partial class AddRefreshToken
+    [Migration("20260118020633_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -465,12 +465,17 @@ namespace SmartCommune.Infrastructure.Migrations
                     b.Property<Guid>("RoleId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("SecurityStamp")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.HasIndex("UserName")
                         .IsUnique();
@@ -507,21 +512,6 @@ namespace SmartCommune.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens", (string)null);
-                });
-
-            modelBuilder.Entity("SmartCommune.Domain.UserAggregate.Entities.UserPermission", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("PermissionId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("UserId", "PermissionId");
-
-                    b.HasIndex("PermissionId");
-
-                    b.ToTable("UserPermissions", (string)null);
                 });
 
             modelBuilder.Entity("SmartCommune.Domain.WorkItemAggregate.Entities.WorkItemAttachment", b =>
@@ -986,6 +976,12 @@ namespace SmartCommune.Infrastructure.Migrations
 
             modelBuilder.Entity("SmartCommune.Domain.UserAggregate.ApplicationUser", b =>
                 {
+                    b.HasOne("SmartCommune.Domain.RoleAggregate.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.OwnsOne("SmartCommune.Domain.UserAggregate.ValueObjects.PasswordHash", "PasswordHash", b1 =>
                         {
                             b1.Property<Guid>("ApplicationUserId")
@@ -1013,6 +1009,8 @@ namespace SmartCommune.Infrastructure.Migrations
 
                     b.Navigation("PasswordHash")
                         .IsRequired();
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("SmartCommune.Domain.UserAggregate.Entities.RefreshToken", b =>
@@ -1022,23 +1020,6 @@ namespace SmartCommune.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("SmartCommune.Domain.UserAggregate.Entities.UserPermission", b =>
-                {
-                    b.HasOne("SmartCommune.Domain.PermissionAggregate.Permission", "Permission")
-                        .WithMany()
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SmartCommune.Domain.UserAggregate.ApplicationUser", null)
-                        .WithMany("Permissions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permission");
                 });
 
             modelBuilder.Entity("SmartCommune.Domain.WorkItemAggregate.Entities.WorkItemAttachment", b =>
@@ -1229,8 +1210,6 @@ namespace SmartCommune.Infrastructure.Migrations
 
             modelBuilder.Entity("SmartCommune.Domain.UserAggregate.ApplicationUser", b =>
                 {
-                    b.Navigation("Permissions");
-
                     b.Navigation("RefreshTokens");
                 });
 

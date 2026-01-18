@@ -24,7 +24,6 @@ public interface IApplicationDbContext
 {
     // User Aggregate.
     DbSet<ApplicationUser> Users { get; }
-    DbSet<UserPermission> UserPermissions { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
 
     // Role Aggregate.

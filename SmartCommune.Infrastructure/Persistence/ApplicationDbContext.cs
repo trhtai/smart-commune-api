@@ -29,7 +29,6 @@ public class ApplicationDbContext(
 {
     // User Aggregate.
     public DbSet<ApplicationUser> Users { get; set; } = null!;
-    public DbSet<UserPermission> UserPermissions { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
     // Role Aggregate.

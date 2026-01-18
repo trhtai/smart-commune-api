@@ -27,8 +27,8 @@ public class RefreshTokenCommandHandler(
         // 1. Tìm User sở hữu Refresh Token.
         var user = await _dbContext.Users
             .Include(u => u.RefreshTokens)
-            .Include(u => u.Permissions)
-                .ThenInclude(p => p.Permission) // Load permission để gen token mới (sẽ xóa khi áp dụng redis).
+            .Include(u => u.Role)
+                .ThenInclude(r => r.Permissions) // Load permission để gen token mới (sẽ xóa khi áp dụng redis).
             .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == request.RefreshToken), cancellationToken);
 
         if (user is null)

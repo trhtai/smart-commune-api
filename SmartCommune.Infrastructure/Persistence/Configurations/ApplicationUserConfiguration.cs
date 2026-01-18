@@ -56,11 +56,13 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
                     .IsRequired();
             });
 
-        // Backing Fields.
-        builder.Navigation(u => u.Permissions)
-            .HasField("_permissions")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
+        // Cấu hình quan hệ với Role.
+        builder.HasOne(u => u.Role)
+            .WithMany()
+            .HasForeignKey(u => u.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
+        // Backing Fields.
         builder.Navigation(u => u.RefreshTokens)
             .HasField("_refreshTokens")
             .UsePropertyAccessMode(PropertyAccessMode.Field);

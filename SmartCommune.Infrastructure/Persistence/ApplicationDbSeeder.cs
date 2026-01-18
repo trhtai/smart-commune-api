@@ -22,7 +22,6 @@ public class ApplicationDbSeeder(
         await SeedPermissionsAsync(cancellationToken);
         await SeedAdminUserAsync(cancellationToken);
         await SeedAdminRoleWithDefaultPermissionsAsync(cancellationToken);
-        await SeedAdminUserPermissionsAsync(cancellationToken);
     }
 
     private async Task SeedPermissionsAsync(CancellationToken cancellationToken)
@@ -82,42 +81,6 @@ public class ApplicationDbSeeder(
                 foreach (var permission in missingPermissions)
                 {
                     adminRole.GrantPermission(permission.Id);
-                }
-
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-        }
-    }
-
-    private async Task SeedAdminUserPermissionsAsync(CancellationToken cancellationToken)
-    {
-        // 1. Lấy User Admin (Username: admin) kèm danh sách quyền riêng biệt
-        var adminUser = await _dbContext.Users
-            .Include(u => u.Permissions)
-            .FirstOrDefaultAsync(u => u.UserName == "admin", cancellationToken);
-
-        if (adminUser is not null)
-        {
-            // 2. Lấy toàn bộ quyền trong hệ thống.
-            var allPermissions = await _dbContext.Permissions
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
-
-            // 3. Lọc ra những ID quyền mà User này chưa được gán trực tiếp.
-            var existingPermissionIds = adminUser.Permissions
-                .Select(up => up.PermissionId)
-                .ToHashSet();
-
-            var missingPermissions = allPermissions
-                .Where(p => !existingPermissionIds.Contains(p.Id))
-                .ToList();
-
-            if (missingPermissions.Count > 0)
-            {
-                foreach (var permission in missingPermissions)
-                {
-                    // Gán quyền trực tiếp cho User
-                    adminUser.GrantPermission(permission.Id);
                 }
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
