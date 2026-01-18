@@ -81,8 +81,7 @@ public sealed class ApplicationUser : AggregateRoot<ApplicationUserId>
     {
         // Xóa các token đã hết hạn hoặc đã bị revoke quá lâu.
         _refreshTokens.RemoveAll(t =>
-            t.IsExpired(now) || // Token đã hết hạn.
-            (t.Revoked != null && t.Revoked <= now.AddDays(-30))); // Giữ lại lịch sử trong vòng 30 ngày.
+            t.Revoked != null && t.Revoked <= now.AddDays(-30)); // Giữ lại lịch sử trong vòng 30 ngày.
 
         // Giới hạn số lượng token đang active.
         var activeTokens = _refreshTokens.Where(t => !t.IsExpired(now) && t.IsActive()).ToList();

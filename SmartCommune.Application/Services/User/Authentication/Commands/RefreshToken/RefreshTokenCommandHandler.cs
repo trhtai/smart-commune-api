@@ -28,7 +28,8 @@ public class RefreshTokenCommandHandler(
         var user = await _dbContext.Users
             .Include(u => u.RefreshTokens)
             .Include(u => u.Role)
-                .ThenInclude(r => r.Permissions) // Load permission để gen token mới (sẽ xóa khi áp dụng redis).
+                .ThenInclude(r => r.Permissions)
+                    .ThenInclude(rp => rp.Permission) // Load permission để gen token mới (sẽ xóa khi áp dụng redis).
             .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == request.RefreshToken), cancellationToken);
 
         if (user is null)
@@ -59,6 +60,9 @@ public class RefreshTokenCommandHandler(
         // xin Access Token 1 lần nữa thì sẽ bị chặn ở bước 2.
         if (existingRefreshToken.IsExpired(_dateTimeProvider.VietNamNow))
         {
+            user.RevokeRefreshToken(existingRefreshToken.Token, _dateTimeProvider.VietNamNow);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
             return Errors.Authentication.InvalidCredentials;
         }
 
