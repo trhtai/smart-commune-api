@@ -1,6 +1,9 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 using Microsoft.AspNetCore.Http;
+
+using SmartCommune.Application.Common.Constants;
 
 namespace SmartCommune.Infrastructure.Security.CurrentUserProvider;
 
@@ -21,12 +24,10 @@ public class CurrentUserProvider(
         }
 
         var id = GetSingleClaimValue(user, ClaimTypes.NameIdentifier);
+        var roleId = GetSingleClaimValue(user, CustomClaims.RoleId);
+        var fullName = GetSingleClaimValue(user, JwtRegisteredClaimNames.Name);
 
-        // var role = GetSingleClaimValue(user, ClaimTypes.Role);
-        // var fullName = GetSingleClaimValue(user, JwtRegisteredClaimNames.Name);
-        // var permissions = GetClaimValues(user, CustomClaims.Permissions);
-
-        return new CurrentUser(Guid.Parse(id));
+        return new CurrentUser(Guid.Parse(id), fullName, Guid.Parse(roleId));
     }
 
     private static string GetSingleClaimValue(ClaimsPrincipal principal, string claimType)
@@ -34,12 +35,5 @@ public class CurrentUserProvider(
         var claim = principal.Claims.SingleOrDefault(c => c.Type == claimType)
             ?? throw new InvalidOperationException($"Missing claim '{claimType}' from token.");
         return claim.Value;
-    }
-
-    private static List<string> GetClaimValues(ClaimsPrincipal principal, string claimType)
-    {
-        return [.. principal.Claims
-            .Where(c => c.Type == claimType)
-            .Select(c => c.Value)];
     }
 }

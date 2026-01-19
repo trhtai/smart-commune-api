@@ -1,17 +1,27 @@
 ﻿using System.Security.Claims;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 using SmartCommune.Application.Common.Constants;
 using SmartCommune.Application.Common.Interfaces.Persistence;
+using SmartCommune.Application.Common.Interfaces.Services;
+using SmartCommune.Application.Common.Options;
 using SmartCommune.Domain.UserAggregate.ValueObjects;
 
 namespace SmartCommune.Api.Middlewares;
 
 public class SecurityStampMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, IServiceProvider serviceProvider)
+    public async Task InvokeAsync(
+        HttpContext context,
+        IServiceProvider serviceProvider,
+        ICacheService cacheService,
+        IOptions<JwtSettings> jwtSettingsOption)
     {
+        var jwtSettings = jwtSettingsOption.Value;
+        var logger = serviceProvider.GetRequiredService<ILogger<SecurityStampMiddleware>>();
+
         // 1. Chỉ kiểm tra nếu user đã authenticate (có Access Token hợp lệ về mặt chữ ký)
         // Nếu chưa login thì có thể Client đang gọi các api không cần Authenticate chẳng hạn => cho qua.
         if (context.User.Identity?.IsAuthenticated == true)
@@ -21,20 +31,42 @@ public class SecurityStampMiddleware(RequestDelegate next)
 
             if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(tokenSecurityStamp))
             {
-                // Sử dụng Scope để lấy DbContext (vì Middleware là Singleton/Transient còn DbContext là Scoped).
-                using var scope = serviceProvider.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+                // Lấy SecurityStamp từ Redis trước.
+                string cacheKey = $"auth:security_stamp:{userId}";
+                string? dbSecurityStamp = null;
 
-                // 2. Lấy SecurityStamp mới nhất từ DB
-                // LƯU Ý: Đoạn này sẽ query DB mỗi request.
-                // Sau này áp dụng Redis, bạn sẽ lấy từ Redis thay vì query DB -> Hiệu năng cực nhanh.
-                var userSecurityStamp = await dbContext.Users
-                    .Where(u => u.Id == ApplicationUserId.Create(Guid.Parse(userId)))
-                    .Select(u => u.SecurityStamp)
-                    .FirstOrDefaultAsync();
+                dbSecurityStamp = await cacheService.GetAsync<string>(cacheKey);
 
-                // 3. So sánh
-                if (userSecurityStamp.ToString() != tokenSecurityStamp)
+                if (dbSecurityStamp is null)
+                {
+                    // Sử dụng Scope để lấy DbContext (vì Middleware là Singleton/Transient còn DbContext là Scoped).
+                    using var scope = serviceProvider.CreateScope();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
+                    // 2. Lấy SecurityStamp mới nhất từ DB
+                    var user = await dbContext.Users
+                        .Where(u => u.Id == ApplicationUserId.Create(Guid.Parse(userId)))
+                        .Select(u => new { u.SecurityStamp })
+                        .FirstOrDefaultAsync();
+
+                    if (user is null)
+                    {
+                        context.Response.StatusCode = 401;
+                        return;
+                    }
+
+                    dbSecurityStamp = user.SecurityStamp.ToString();
+
+                    // 3. Có dữ liệu rồi thì thử lưu lại vào Redis (nếu Redis sống lại)
+                    // Lưu vào Redis(TTL ngắn, ví dụ 15 phút, trùng với thời gian Access Token).
+                    await cacheService.SetAsync(
+                        cacheKey,
+                        dbSecurityStamp,
+                        TimeSpan.FromMinutes(jwtSettings.ExpiryMinutes));
+                }
+
+                // 3. So sánh.
+                if (dbSecurityStamp != tokenSecurityStamp)
                 {
                     // Nếu khác nhau -> Token cũ không còn giá trị -> Trả về 401.
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;

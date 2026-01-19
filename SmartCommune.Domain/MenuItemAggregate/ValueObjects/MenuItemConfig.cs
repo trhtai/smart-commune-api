@@ -28,6 +28,7 @@ public sealed class MenuItemConfig : ValueObject
     public string Type { get; private set; }
 
     /// <summary>
+    /// Chỉ item con mới có Path.
     /// "/work", "/auth",...
     /// </summary>
     public string? Path { get; private set; }

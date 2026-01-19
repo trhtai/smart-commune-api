@@ -35,16 +35,8 @@ public class JwtTokenGenerator(
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
             new(CustomClaims.SecurityStamp, user.SecurityStamp.ToString()),
+            new(CustomClaims.RoleId, user.RoleId.Value.ToString()),
         };
-
-        // se xoa sau khi luu permissions vao redis.
-        var permissions = user.Role.Permissions
-            .Select(up => up.Permission.Code)
-            .ToList();
-        foreach (string permission in permissions)
-        {
-            claims.Add(new(CustomClaims.Permissions, permission));
-        }
 
         var securityToken = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,

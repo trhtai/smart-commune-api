@@ -13,11 +13,13 @@ namespace SmartCommune.Application.Services.Manage.Users.Commands.LockUser;
 
 public class LockUserCommandHandler(
     IApplicationDbContext dbContext,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    ICacheService cacheService)
     : IRequestHandler<LockUserCommand, ErrorOr<Unit>>
 {
     private readonly IApplicationDbContext _dbContext = dbContext;
     private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
+    private readonly ICacheService _cacheService = cacheService;
 
     public async Task<ErrorOr<Unit>> Handle(LockUserCommand request, CancellationToken cancellationToken)
     {
@@ -32,6 +34,9 @@ public class LockUserCommandHandler(
         user.LockAccount(_dateTimeProvider.VietNamNow);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Xóa khỏi cache.
+        await _cacheService.RemoveAsync($"auth:security_stamp:{request.UserId}", cancellationToken);
 
         return Unit.Value;
     }

@@ -2,6 +2,7 @@
 
 public class CustomClaims
 {
+    public const string RoleId = "role_id";
     public const string SecurityStamp = "security_stamp";
     public const string Permissions = "permissions";
 }

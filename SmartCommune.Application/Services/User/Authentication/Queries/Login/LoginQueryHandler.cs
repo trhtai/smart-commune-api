@@ -31,9 +31,6 @@ public class LoginQueryHandler(
         // 1. Tìm user theo UserName.
         var user = await _dbContext.Users
             .Include(u => u.RefreshTokens)
-            .Include(u => u.Role)
-                .ThenInclude(r => r.Permissions)
-                    .ThenInclude(rp => rp.Permission)
             .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
 
         if (user is null)

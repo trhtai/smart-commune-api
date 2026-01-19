@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
+using SmartCommune.Application.Common.Constants;
 using SmartCommune.Application.Common.Interfaces.Authentication;
 using SmartCommune.Application.Common.Interfaces.Persistence;
 using SmartCommune.Application.Common.Interfaces.Services;
@@ -36,8 +37,23 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         services
+            .AddCaching(configuration) // Redis.
             .AddPersistence(configuration) // Db services.
             .AddAuth(configuration); // Auth services: authentication and authorization.
+
+        return services;
+    }
+
+    public static IServiceCollection AddCaching(
+        this IServiceCollection services,
+        ConfigurationManager configuration)
+    {
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis");
+        });
+
+        services.AddSingleton<ICacheService, CacheService>();
 
         return services;
     }
@@ -106,6 +122,7 @@ public static class DependencyInjection
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
                 ClockSkew = TimeSpan.FromSeconds(3),
                 NameClaimType = JwtRegisteredClaimNames.Sub,
+                RoleClaimType = CustomClaims.RoleId,
             };
         });
 
