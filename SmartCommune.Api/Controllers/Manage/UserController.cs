@@ -1,19 +1,36 @@
-﻿using MediatR;
+﻿using MapsterMapper;
+
+using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
+using SmartCommune.Application.Services.Manage.Users.Commands.CreateUser;
 using SmartCommune.Application.Services.Manage.Users.Commands.LockUser;
 using SmartCommune.Application.Services.Manage.Users.Commands.UnlockUser;
+using SmartCommune.Contracts.Manage.Users;
 
 namespace SmartCommune.Api.Controllers.Manage;
 
 [ApiController]
 [Route("api/admin/users")]
 public class UserController(
-    ISender sender)
+    ISender sender,
+    IMapper mapper)
    : BaseController
 {
     private readonly ISender _sender = sender;
+    private readonly IMapper _mapper = mapper;
+
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+    {
+        var createUserCommand = _mapper.Map<CreateUserCommand>(request);
+        var result = await _sender.Send(createUserCommand);
+
+        return result.Match(
+            userId => CreatedAtAction(nameof(CreateUser), new { id = userId }, userId),
+            errors => HandleProblem(errors));
+    }
 
     [HttpPut("{userId}/lock")]
     public async Task<IActionResult> LockUser(Guid userId)

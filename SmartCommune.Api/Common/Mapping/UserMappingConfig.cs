@@ -10,9 +10,8 @@ public class UserMappingConfig : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        // AuthenticationController.
+        // Authentication Controller.
         config.NewConfig<LoginRequest, LoginQuery>();
-
         config.NewConfig<AuthenticationResult, AuthenticationResponse>();
     }
 }

@@ -12,16 +12,16 @@ public static partial class Errors
         public static readonly Error InvalidCredentials =
             Error.Validation(
                 code: "Authentication.InvalidCredentials",
-                description: "Thông tin được cung cấp không hợp lệ.");
+                description: "Thông tin được cung cấp không hợp lệ");
 
         public static readonly Error Unauthorized =
             Error.Validation(
                 code: "Authentication.Unauthorized",
-                description: "Người dùng chưa được xác thực.");
+                description: "Người dùng chưa được xác thực");
 
         public static readonly Error AccountLocked =
             Error.Conflict(
                 code: "Authentication.AccountLocked",
-                description: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
+                description: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin");
     }
 }

@@ -12,6 +12,11 @@ public static partial class Errors
         public static readonly Error NotFound =
             Error.NotFound(
                 code: "User.NotFound",
-                description: "Không tìm thấy người dùng.");
+                description: "Không tìm thấy người dùng");
+
+        public static readonly Error DuplicateUserName =
+            Error.Conflict(
+                code: "User.Conflict",
+                description: "Tên đăng nhập đã tồn tại");
     }
 }
