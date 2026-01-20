@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using SmartCommune.Application.Common.Behaviors;
 using SmartCommune.Application.Common.Mapping;
+using SmartCommune.Application.Services.Identity.MenuItems;
+using SmartCommune.Application.Services.Identity.Permissions;
 
 namespace SmartCommune.Application;
 
@@ -31,6 +33,10 @@ public static class DependencyInjection
 
         // MAPPINGS.
         services.AddMappings();
+
+        // SERVICES.
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IMenuItemService, MenuItemService>();
 
         return services;
     }

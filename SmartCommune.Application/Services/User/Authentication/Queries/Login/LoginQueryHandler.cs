@@ -9,6 +9,8 @@ using SmartCommune.Application.Common.Interfaces.Authentication;
 using SmartCommune.Application.Common.Interfaces.Persistence;
 using SmartCommune.Application.Common.Interfaces.Services;
 using SmartCommune.Application.Common.Options;
+using SmartCommune.Application.Services.Identity.MenuItems;
+using SmartCommune.Application.Services.Identity.Permissions;
 using SmartCommune.Application.Services.User.Authentication.Common;
 using SmartCommune.Domain.Common.Errors;
 
@@ -18,13 +20,17 @@ public class LoginQueryHandler(
     IJwtTokenGenerator jwtTokenGenerator,
     IApplicationDbContext dbContext,
     IDateTimeProvider dateTimeProvider,
-    IOptions<JwtSettings> jwtSettingsOption)
+    IOptions<JwtSettings> jwtSettingsOption,
+    IPermissionService permissionService,
+    IMenuItemService menuItemService)
     : IRequestHandler<LoginQuery, ErrorOr<AuthenticationResult>>
 {
     private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
     private readonly IApplicationDbContext _dbContext = dbContext;
     private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
     private readonly JwtSettings _jwtSettings = jwtSettingsOption.Value;
+    private readonly IPermissionService _permissionService = permissionService;
+    private readonly IMenuItemService _menuItemService = menuItemService;
 
     public async Task<ErrorOr<AuthenticationResult>> Handle(LoginQuery request, CancellationToken cancellationToken)
     {
@@ -62,10 +68,18 @@ public class LoginQueryHandler(
         // 7. Lưu thay đổi vào DB.
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        // 8. Lấy danh sách Permissions (Tự động Hit Cache)
+        var permissions = await _permissionService.GetPermissionsAsync(user.RoleId, cancellationToken);
+
+        // 9. Lấy Menu (Tự động Hit Cache + Cắt tỉa theo quyền)
+        var menu = await _menuItemService.GetMenuAsync(user.RoleId, cancellationToken);
+
         return new AuthenticationResult(
             user.Id.Value,
             user.FullName,
             accessToken,
-            refreshToken);
+            refreshToken,
+            permissions.ToList(),
+            menu);
     }
 }

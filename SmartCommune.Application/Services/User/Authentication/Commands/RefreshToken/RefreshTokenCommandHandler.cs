@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using SmartCommune.Application.Common.Interfaces.Authentication;
 using SmartCommune.Application.Common.Interfaces.Persistence;
 using SmartCommune.Application.Common.Interfaces.Services;
+using SmartCommune.Application.Services.Identity.MenuItems;
+using SmartCommune.Application.Services.Identity.Permissions;
 using SmartCommune.Application.Services.User.Authentication.Common;
 using SmartCommune.Domain.Common.Errors;
 
@@ -15,21 +17,22 @@ namespace SmartCommune.Application.Services.User.Authentication.Commands.Refresh
 public class RefreshTokenCommandHandler(
     IApplicationDbContext dbContext,
     IJwtTokenGenerator jwtTokenGenerator,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    IPermissionService permissionService,
+    IMenuItemService menuItemService)
     : IRequestHandler<RefreshTokenCommand, ErrorOr<AuthenticationResult>>
 {
     private readonly IApplicationDbContext _dbContext = dbContext;
     private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
     private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
+    private readonly IPermissionService _permissionService = permissionService;
+    private readonly IMenuItemService _menuItemService = menuItemService;
 
     public async Task<ErrorOr<AuthenticationResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         // 1. Tìm User sở hữu Refresh Token.
         var user = await _dbContext.Users
             .Include(u => u.RefreshTokens)
-            .Include(u => u.Role)
-                .ThenInclude(r => r.Permissions)
-                    .ThenInclude(rp => rp.Permission) // Load permission để gen token mới (sẽ xóa khi áp dụng redis).
             .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == request.RefreshToken), cancellationToken);
 
         if (user is null)
@@ -69,10 +72,18 @@ public class RefreshTokenCommandHandler(
         // 4. Generate Token mới.
         var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(user);
 
+        // 5. Lấy Permissions mới nhất
+        var permissions = await _permissionService.GetPermissionsAsync(user.RoleId, cancellationToken);
+
+        // 6. Lấy Menu mới nhất (đã cắt tỉa)
+        var menu = await _menuItemService.GetMenuAsync(user.RoleId, cancellationToken);
+
         return new AuthenticationResult(
             user.Id.Value,
             user.FullName,
             newAccessToken,
-            request.RefreshToken);
+            request.RefreshToken,
+            permissions.ToList(),
+            menu);
     }
 }
