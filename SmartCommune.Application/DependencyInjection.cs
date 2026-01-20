@@ -7,6 +7,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 using SmartCommune.Application.Common.Behaviors;
+using SmartCommune.Application.Common.Mapping;
 
 namespace SmartCommune.Application;
 
@@ -27,6 +28,9 @@ public static class DependencyInjection
             typeof(ValidationBehavior<,>));
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // MAPPINGS.
+        services.AddMappings();
 
         return services;
     }

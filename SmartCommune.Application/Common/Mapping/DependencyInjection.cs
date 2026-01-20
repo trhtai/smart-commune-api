@@ -4,7 +4,9 @@ using Mapster;
 
 using MapsterMapper;
 
-namespace SmartCommune.Api.Common.Mapping;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace SmartCommune.Application.Common.Mapping;
 
 public static class DependencyInjection
 {

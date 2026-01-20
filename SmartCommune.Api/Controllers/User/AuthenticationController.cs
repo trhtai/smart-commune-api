@@ -1,6 +1,4 @@
-﻿using MapsterMapper;
-
-using MediatR;
+﻿using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +8,8 @@ using SmartCommune.Application.Common.Interfaces.Services;
 using SmartCommune.Application.Common.Options;
 using SmartCommune.Application.Services.User.Authentication.Commands.RefreshToken;
 using SmartCommune.Application.Services.User.Authentication.Commands.RevokeToken;
-using SmartCommune.Application.Services.User.Authentication.Common;
 using SmartCommune.Application.Services.User.Authentication.Queries.Login;
-using SmartCommune.Contracts.User.Authentication;
+using SmartCommune.Constracts.User.Authentication;
 
 namespace SmartCommune.Api.Controllers.User;
 
@@ -20,33 +17,31 @@ namespace SmartCommune.Api.Controllers.User;
 [Route("api/auth")]
 public class AuthenticationController(
     ISender sender,
-    IMapper mapper,
     IDateTimeProvider dateTimeProvider,
     IOptions<JwtSettings> jwtSettingsOption)
     : BaseController
 {
     private readonly ISender _sender = sender;
-    private readonly IMapper _mapper = mapper;
     private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
     private readonly JwtSettings _jwtSettings = jwtSettingsOption.Value;
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var loginQuery = _mapper.Map<LoginQuery>(loginRequest);
-        var result = await _sender.Send(loginQuery, HttpContext.RequestAborted);
+        var query = new LoginQuery(
+            request.UserName,
+            request.Password);
 
-        if (result.IsError)
-        {
-            return HandleProblem(result.Errors);
-        }
+        var result = await _sender.Send(query, HttpContext.RequestAborted);
 
-        var authenticationResult = result.Value;
-
-        SetRefreshTokenCookie(authenticationResult.RefreshToken);
-
-        return Ok(_mapper.Map<AuthenticationResponse>(authenticationResult));
+        return result.Match(
+            authResult =>
+            {
+                SetRefreshTokenCookie(authResult.RefreshToken);
+                return Ok(authResult);
+            },
+            HandleProblem);
     }
 
     [HttpPost("refresh-token")]
@@ -65,11 +60,11 @@ public class AuthenticationController(
 
         // Tiến hành Refresh Token.
         var command = new RefreshTokenCommand(refreshToken);
-        var authResult = await _sender.Send(command, HttpContext.RequestAborted);
+        var result = await _sender.Send(command, HttpContext.RequestAborted);
 
-        return authResult.Match(
-            result => Ok(_mapper.Map<AuthenticationResponse>(result)),
-            errors => HandleProblem(errors));
+        return result.Match(
+            Ok,
+            HandleProblem);
     }
 
     [HttpPost("revoke-token")]
@@ -95,7 +90,7 @@ public class AuthenticationController(
                 Response.Cookies.Delete("refreshToken");
                 return NoContent();
             },
-            errors => HandleProblem(errors));
+            HandleProblem);
     }
 
     private void SetRefreshTokenCookie(string refreshToken)

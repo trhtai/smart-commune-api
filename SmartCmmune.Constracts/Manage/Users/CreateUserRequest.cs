@@ -1,4 +1,4 @@
-﻿namespace SmartCommune.Contracts.Manage.Users;
+﻿namespace SmartCommune.Constracts.Manage.Users;
 
 public record CreateUserRequest(
     string UserName,

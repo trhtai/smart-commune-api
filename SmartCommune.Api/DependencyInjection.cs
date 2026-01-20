@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Options;
 
 using SmartCommune.Api.Common.Constants;
-using SmartCommune.Api.Common.Mapping;
 using SmartCommune.Api.Configurations;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -35,9 +34,6 @@ public static class DependencyInjection
 
             options.Filters.Add(new AuthorizeFilter(policy));
         });
-
-        // MAPPINGS.
-        services.AddMappings();
 
         // CORS.
         services.AddCorsPolicies(configuration);
