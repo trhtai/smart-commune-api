@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using MapsterMapper;
+
+using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +19,13 @@ namespace SmartCommune.Api.Controllers.User;
 [Route("api/auth")]
 public class AuthenticationController(
     ISender sender,
+    IMapper mapper,
     IDateTimeProvider dateTimeProvider,
     IOptions<JwtSettings> jwtSettingsOption)
     : BaseController
 {
     private readonly ISender _sender = sender;
+    private readonly IMapper _mapper = mapper;
     private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
     private readonly JwtSettings _jwtSettings = jwtSettingsOption.Value;
 
@@ -29,10 +33,7 @@ public class AuthenticationController(
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var query = new LoginQuery(
-            request.UserName,
-            request.Password);
-
+        var query = _mapper.Map<LoginQuery>(request);
         var result = await _sender.Send(query, HttpContext.RequestAborted);
 
         return result.Match(

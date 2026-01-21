@@ -1,6 +1,6 @@
 ﻿using Mapster;
 
-namespace SmartCommune.Application.Common.Mapping;
+namespace SmartCommune.Api.Common.Mapping;
 
 public class UserMappingConfig : IRegister
 {

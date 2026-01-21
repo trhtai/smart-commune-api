@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Options;
 
 using SmartCommune.Api.Common.Constants;
+using SmartCommune.Api.Common.Mapping;
 using SmartCommune.Api.Configurations;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -51,6 +52,9 @@ public static class DependencyInjection
         // HttpContextAccessor cho phép truy cập thẳng HttpContext từ các class nằm ngoài Controller.
         // Ví dụ: CurrentUserProvider hiện có trong hệ thống.
         services.AddHttpContextAccessor();
+
+        // Mapping.
+        services.AddMappings();
 
         return services;
     }

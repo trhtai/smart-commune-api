@@ -8,4 +8,4 @@ public record AuthenticationResult(
     string AccessToken,
     string RefreshToken,
     List<string> Permissions,
-    List<MenuItemResponse> Menu);
+    List<MenuItemResult> Menu);

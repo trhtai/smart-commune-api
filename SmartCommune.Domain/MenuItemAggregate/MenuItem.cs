@@ -1,6 +1,7 @@
 ﻿using SmartCommune.Domain.Common.Models;
 using SmartCommune.Domain.MenuItemAggregate.Entities;
 using SmartCommune.Domain.MenuItemAggregate.ValueObjects;
+using SmartCommune.Domain.PermissionAggregate.ValueObjects;
 
 namespace SmartCommune.Domain.MenuItemAggregate;
 
@@ -51,5 +52,33 @@ public class MenuItem : AggregateRoot<MenuItemId>
             parentId);
 
         return menu;
+    }
+
+    public void Update(
+        string label,
+        int sortOrder,
+        MenuItemConfig config,
+        MenuItemId? parentId)
+    {
+        Label = label;
+        SortOrder = sortOrder;
+        Config = config; // Vì Config là ValueObject immutable, ta thay thế bằng instance mới
+        ParentId = parentId;
+    }
+
+    /// <summary>
+    /// Thay thế toàn bộ danh sách permission hiện tại bằng danh sách mới.
+    /// </summary>
+    /// <param name="permissionIds">Danh sách permissions Id.</param>
+    public void UpdatePermissions(List<PermissionId> permissionIds)
+    {
+        // Xóa danh sách hiện tại
+        _permissions.Clear();
+
+        // Thêm mới
+        foreach (var permissionId in permissionIds)
+        {
+            _permissions.Add(MenuItemPermission.Create(Id, permissionId));
+        }
     }
 }

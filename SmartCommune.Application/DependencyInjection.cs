@@ -7,7 +7,6 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 using SmartCommune.Application.Common.Behaviors;
-using SmartCommune.Application.Common.Mapping;
 using SmartCommune.Application.Services.Identity.MenuItems;
 using SmartCommune.Application.Services.Identity.Permissions;
 
@@ -30,9 +29,6 @@ public static class DependencyInjection
             typeof(ValidationBehavior<,>));
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
-        // MAPPINGS.
-        services.AddMappings();
 
         // SERVICES.
         services.AddScoped<IPermissionService, PermissionService>();

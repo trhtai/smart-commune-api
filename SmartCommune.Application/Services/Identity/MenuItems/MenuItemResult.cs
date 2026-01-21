@@ -1,6 +1,6 @@
 ﻿namespace SmartCommune.Application.Services.Identity.MenuItems;
 
-public record MenuItemResponse(
+public record MenuItemResult(
     Guid Id,
     string Label,           // Map từ MenuItem.Label
     string? Icon,           // Map từ MenuItem.Config.Icon
@@ -10,5 +10,5 @@ public record MenuItemResponse(
     int OrderIndex,         // Map từ MenuItem.SortOrder
     List<string> CheckRoutes) // Map từ MenuItem.Config.CheckRoutes
 {
-    public List<MenuItemResponse> Children { get; set; } = [];
+    public List<MenuItemResult> Children { get; set; } = [];
 }

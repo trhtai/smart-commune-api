@@ -5,10 +5,13 @@ using Microsoft.Extensions.Logging;
 
 using SmartCommune.Application.Common.Interfaces.Services;
 
+using StackExchange.Redis;
+
 namespace SmartCommune.Infrastructure.Services;
 
 public class CacheService(
     IDistributedCache distributedCache,
+    IConnectionMultiplexer connectionMultiplexer,
     ILogger<CacheService> logger) : ICacheService
 {
     // --- KHAI BÁO BIẾN CHO CIRCUIT BREAKER ---
@@ -18,6 +21,8 @@ public class CacheService(
     private readonly Lock _lock = new();
 
     private readonly IDistributedCache _distributedCache = distributedCache;
+    private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer;
+    private readonly IDatabase _database = connectionMultiplexer.GetDatabase();
     private readonly ILogger<CacheService> _logger = logger;
 
     public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
@@ -110,6 +115,30 @@ public class CacheService(
         catch (Exception ex)
         {
             HandleRedisException(ex, "REMOVE", key);
+        }
+    }
+
+    public async Task RemoveByPrefixAsync(string prefixKey, CancellationToken cancellationToken = default)
+    {
+        // 1. Tìm tất cả các EndPoints (Redis có thể là Cluster hoặc Single node)
+        var endpoints = _connectionMultiplexer.GetEndPoints();
+        var server = _connectionMultiplexer.GetServer(endpoints.First());
+
+        // 2. Tìm tất cả các Key khớp với pattern (Sử dụng SCAN thay vì KEYS để không block Redis)
+        // Lưu ý: prefixKey nên là "app:menu:"
+        var keys = server.KeysAsync(pattern: prefixKey + "*");
+
+        var keysToDelete = new List<RedisKey>();
+
+        await foreach (var key in keys.WithCancellation(cancellationToken))
+        {
+            keysToDelete.Add(key);
+        }
+
+        // 3. Xóa các key tìm được
+        if (keysToDelete.Count > 0)
+        {
+            await _database.KeyDeleteAsync(keysToDelete.ToArray());
         }
     }
 

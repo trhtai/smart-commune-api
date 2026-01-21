@@ -19,6 +19,8 @@ using SmartCommune.Infrastructure.Persistence;
 using SmartCommune.Infrastructure.Security.CurrentUserProvider;
 using SmartCommune.Infrastructure.Services;
 
+using StackExchange.Redis;
+
 namespace SmartCommune.Infrastructure;
 
 public static class DependencyInjection
@@ -35,6 +37,13 @@ public static class DependencyInjection
         // Application services.
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var connectionString = configuration.GetConnectionString("Redis")
+                                   ?? "localhost:6379";
+            return ConnectionMultiplexer.Connect(connectionString);
+        });
 
         services
             .AddCaching(configuration) // Redis.

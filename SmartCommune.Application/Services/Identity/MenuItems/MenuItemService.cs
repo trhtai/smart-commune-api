@@ -15,12 +15,12 @@ public class MenuItemService(
     private readonly IApplicationDbContext _dbContext = dbContext;
     private readonly ICacheService _cacheService = cacheService;
 
-    public async Task<List<MenuItemResponse>> GetMenuAsync(RoleId roleId, CancellationToken cancellationToken = default)
+    public async Task<List<MenuItemResult>> GetMenuAsync(RoleId roleId, CancellationToken cancellationToken = default)
     {
         string cacheKey = $"app:menu:role:{roleId.Value}";
 
         // 1. Thử lấy từ Cache Redis
-        var cachedMenu = await _cacheService.GetAsync<List<MenuItemResponse>>(cacheKey, cancellationToken);
+        var cachedMenu = await _cacheService.GetAsync<List<MenuItemResult>>(cacheKey, cancellationToken);
         if (cachedMenu is not null)
         {
             return cachedMenu;
@@ -41,7 +41,7 @@ public class MenuItemService(
         await _cacheService.RemoveAsync(cacheKey, cancellationToken);
     }
 
-    private async Task<List<MenuItemResponse>> BuildMenuTreeInternal(RoleId roleId, CancellationToken cancellationToken)
+    private async Task<List<MenuItemResult>> BuildMenuTreeInternal(RoleId roleId, CancellationToken cancellationToken)
     {
         // A. Lấy danh sách PermissionId mà Role này sở hữu
         // (RolePermission -> PermissionId)
@@ -91,10 +91,10 @@ public class MenuItemService(
     /// <summary>
     /// Chuyển đổi danh sách phẳng thành cây dựa trên ParentId.
     /// </summary>
-    private List<MenuItemResponse> BuildRawTree(List<MenuItem> flatItems)
+    private List<MenuItemResult> BuildRawTree(List<MenuItem> flatItems)
     {
         // 1. Map Entity sang DTO và đưa vào Dictionary để tra cứu nhanh
-        var lookup = flatItems.ToDictionary(x => x.Id, x => new MenuItemResponse(
+        var lookup = flatItems.ToDictionary(x => x.Id, x => new MenuItemResult(
             x.Id.Value,
             x.Label,
             x.Config.Icon,
@@ -104,7 +104,7 @@ public class MenuItemService(
             x.SortOrder,
             x.Config.CheckRoutes));
 
-        var rootNodes = new List<MenuItemResponse>();
+        var rootNodes = new List<MenuItemResult>();
 
         // 2. Duyệt qua từng item để lắp ghép cha con
         foreach (var item in flatItems)
@@ -141,9 +141,9 @@ public class MenuItemService(
     /// <summary>
     /// Đệ quy cắt tỉa các nhánh cụt (Folder không có con).
     /// </summary>
-    private List<MenuItemResponse> PruneTreeRecursive(List<MenuItemResponse> nodes)
+    private List<MenuItemResult> PruneTreeRecursive(List<MenuItemResult> nodes)
     {
-        var keptNodes = new List<MenuItemResponse>();
+        var keptNodes = new List<MenuItemResult>();
 
         foreach (var node in nodes)
         {
