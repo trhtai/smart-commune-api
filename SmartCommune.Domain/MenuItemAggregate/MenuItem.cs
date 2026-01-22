@@ -72,10 +72,8 @@ public class MenuItem : AggregateRoot<MenuItemId>
     /// <param name="permissionIds">Danh sách permissions Id.</param>
     public void UpdatePermissions(List<PermissionId> permissionIds)
     {
-        // Xóa danh sách hiện tại
         _permissions.Clear();
 
-        // Thêm mới
         foreach (var permissionId in permissionIds)
         {
             _permissions.Add(MenuItemPermission.Create(Id, permissionId));

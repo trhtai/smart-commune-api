@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using SmartCommune.Domain.Common.Models;
 
@@ -6,6 +7,7 @@ namespace SmartCommune.Domain.MenuItemAggregate.ValueObjects;
 
 public sealed class MenuItemConfig : ValueObject
 {
+    [JsonConstructor]
     private MenuItemConfig(
         string type,
         string? path,

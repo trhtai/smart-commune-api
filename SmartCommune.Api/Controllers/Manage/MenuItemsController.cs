@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using MapsterMapper;
+
+using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,27 +13,33 @@ namespace SmartCommune.Api.Controllers.Manage;
 [ApiController]
 [Route("api/admin/menu-items")]
 public class MenuItemsController(
-    ISender sender)
+    ISender sender,
+    IMapper mapper)
     : BaseController
 {
     private readonly ISender _sender = sender;
+    private readonly IMapper _mapper = mapper;
 
     [HttpGet]
     public async Task<IActionResult> GetMenus()
     {
-        var result = await _sender.Send(new GetAllMenuItemsQuery());
-        return result.Match(Ok, HandleProblem);
+        var query = new GetAllMenuItemsQuery();
+        var result = await _sender.Send(query);
+
+        return result.Match(
+            menus => Ok(_mapper.Map<List<MenuItemsResponse>>(menus)),
+            HandleProblem);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateMenuItem(CreateMenuItemRequest request)
     {
         var command = new CreateMenuItemCommand(
-            Label: request.Label,
+            Label: request.Title,
             SortOrder: request.SortOrder,
             ParentId: request.ParentId,
             Type: request.Type,
-            Path: request.Path,
+            Path: request.To,
             Icon: request.Icon,
             ActiveIcon: request.ActiveIcon,
             CheckRoutes: request.CheckRoutes ?? [],

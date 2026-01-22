@@ -2,9 +2,9 @@
 
 public record CreateMenuItemRequest(
     Guid? ParentId,
-    string Label,
+    string Title,
     string Type,
-    string Path,
+    string To,
     string Icon,
     string ActiveIcon,
     int SortOrder,
