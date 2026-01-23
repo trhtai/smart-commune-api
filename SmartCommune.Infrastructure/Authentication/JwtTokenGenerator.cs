@@ -7,18 +7,15 @@ using Microsoft.IdentityModel.Tokens;
 
 using SmartCommune.Application.Common.Constants;
 using SmartCommune.Application.Common.Interfaces.Authentication;
-using SmartCommune.Application.Common.Interfaces.Services;
 using SmartCommune.Application.Common.Options;
 using SmartCommune.Domain.UserAggregate;
 
 namespace SmartCommune.Infrastructure.Authentication;
 
 public class JwtTokenGenerator(
-    IDateTimeProvider dateTimeProvider,
     IOptions<JwtSettings> jwtSettingsOption)
     : IJwtTokenGenerator
 {
-    private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
     private readonly JwtSettings _jwtSettings = jwtSettingsOption.Value;
 
     public string GenerateAccessToken(ApplicationUser user)
@@ -40,7 +37,7 @@ public class JwtTokenGenerator(
 
         var securityToken = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
-            expires: _dateTimeProvider.VietNamNow.AddMinutes(_jwtSettings.ExpiryMinutes),
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes),
             audience: _jwtSettings.Audience,
             claims: claims,
             signingCredentials: signingCredentials);
