@@ -11,7 +11,12 @@ public static partial class Errors
     {
         public static readonly Error ParentNotFound =
             Error.NotFound(
-                code: "Menu.NotFound",
+                code: "Menu.ParentNotFound",
                 description: "Menu cha không tồn tại");
+
+        public static readonly Error NotFound =
+            Error.NotFound(
+                code: "Menu.NotFound",
+                description: "Menu Item không tồn tại");
     }
 }

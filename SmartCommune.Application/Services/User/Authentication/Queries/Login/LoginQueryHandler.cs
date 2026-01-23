@@ -79,7 +79,7 @@ public class LoginQueryHandler(
             user.FullName,
             accessToken,
             refreshToken,
-            permissions.ToList(),
+            [.. permissions],
             menu);
     }
 }

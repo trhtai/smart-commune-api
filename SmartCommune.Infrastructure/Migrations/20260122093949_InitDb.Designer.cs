@@ -12,7 +12,7 @@ using SmartCommune.Infrastructure.Persistence;
 namespace SmartCommune.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260118020633_InitDb")]
+    [Migration("20260122093949_InitDb")]
     partial class InitDb
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace SmartCommune.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.11")
+                .HasAnnotation("ProductVersion", "9.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);

@@ -1,6 +1,6 @@
 ﻿namespace SmartCommune.Application.Services.Manage.MenuItems.Common;
 
-public record MenuItemResult(
+public record MenuItemManageResult(
     Guid Id,
     string Label,
     string? Icon,
@@ -12,4 +12,4 @@ public record MenuItemResult(
     List<string> CheckRoutes,
     List<string> RelatedPaths,
     List<Guid> AssignedPermissionIds,
-    List<MenuItemResult>? Children);
+    List<MenuItemManageResult>? Children);

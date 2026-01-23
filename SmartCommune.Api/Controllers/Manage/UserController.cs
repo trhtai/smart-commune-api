@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using MapsterMapper;
+
+using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,20 +14,17 @@ namespace SmartCommune.Api.Controllers.Manage;
 [ApiController]
 [Route("api/admin/users")]
 public class UserController(
-    ISender sender)
+    ISender sender,
+    IMapper mapper)
    : BaseController
 {
     private readonly ISender _sender = sender;
+    private readonly IMapper _mapper = mapper;
 
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
-        var command = new CreateUserCommand(
-            request.UserName,
-            request.Password,
-            request.FullName,
-            request.RoleId);
-
+        var command = _mapper.Map<CreateUserCommand>(request);
         var result = await _sender.Send(command);
 
         return result.Match(

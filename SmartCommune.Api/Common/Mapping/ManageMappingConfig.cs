@@ -10,7 +10,7 @@ public class ManageMappingConfig : IRegister
     public void Register(TypeAdapterConfig config)
     {
         // Menu Items.
-        config.NewConfig<MenuItemResult, MenuItemsResponse>()
+        config.NewConfig<MenuItemManageResult, MenuItemsResponse>()
             .Map(dest => dest.Title, src => src.Label)
             .Map(dest => dest.To, src => src.RouterLink);
     }

@@ -2,12 +2,11 @@
 
 using MediatR;
 
-namespace SmartCommune.Application.Services.Manage.MenuItems.Commands.CreateMenuItem;
+namespace SmartCommune.Application.Services.Manage.MenuItems.Commands.UpdateMenuItem;
 
-public record CreateMenuItemCommand(
+public record UpdateMenuItemCommand(
+    Guid Id,
     string Label,
-    int SortOrder,
-    Guid? ParentId,
     string Type,
     string? Path,
     string? Icon,
@@ -15,4 +14,4 @@ public record CreateMenuItemCommand(
     List<string> CheckRoutes,
     List<string> RelatedPaths,
     List<Guid> PermissionIds)
-    : IRequest<ErrorOr<Guid>>;
+    : IRequest<ErrorOr<Updated>>;

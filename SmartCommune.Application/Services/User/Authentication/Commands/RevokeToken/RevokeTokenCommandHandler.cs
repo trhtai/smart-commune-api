@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 using SmartCommune.Application.Common.Interfaces.Persistence;
 using SmartCommune.Application.Common.Interfaces.Services;
+using SmartCommune.Domain.Common.Errors;
 
 namespace SmartCommune.Application.Services.User.Authentication.Commands.RevokeToken;
 
@@ -19,6 +20,12 @@ public class RevokeTokenCommandHandler(
 
     public async Task<ErrorOr<Success>> Handle(RevokeTokenCommand request, CancellationToken cancellationToken)
     {
+        // 0. Validate refresh token.
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return Errors.Authentication.InvalidCredentials;
+        }
+
         // 1. Tìm User chứa token.
         var user = await _dbContext.Users
             .Include(u => u.RefreshTokens)

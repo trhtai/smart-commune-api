@@ -62,7 +62,7 @@ public class MenuItem : AggregateRoot<MenuItemId>
     {
         Label = label;
         SortOrder = sortOrder;
-        Config = config; // Vì Config là ValueObject immutable, ta thay thế bằng instance mới
+        Config = config;
         ParentId = parentId;
     }
 

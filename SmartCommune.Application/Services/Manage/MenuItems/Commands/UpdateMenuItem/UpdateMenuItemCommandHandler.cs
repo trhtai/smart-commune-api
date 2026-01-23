@@ -7,37 +7,32 @@ using Microsoft.EntityFrameworkCore;
 using SmartCommune.Application.Common.Interfaces.Persistence;
 using SmartCommune.Application.Common.Interfaces.Services;
 using SmartCommune.Domain.Common.Errors;
-using SmartCommune.Domain.MenuItemAggregate;
 using SmartCommune.Domain.MenuItemAggregate.ValueObjects;
 using SmartCommune.Domain.PermissionAggregate.ValueObjects;
 
-namespace SmartCommune.Application.Services.Manage.MenuItems.Commands.CreateMenuItem;
+namespace SmartCommune.Application.Services.Manage.MenuItems.Commands.UpdateMenuItem;
 
-public class CreateMenuItemCommandHandler(
+public class UpdateMenuItemCommandHandler(
     IApplicationDbContext dbContext,
     ICacheService cacheService)
-    : IRequestHandler<CreateMenuItemCommand, ErrorOr<Guid>>
+    : IRequestHandler<UpdateMenuItemCommand, ErrorOr<Updated>>
 {
     private readonly IApplicationDbContext _dbContext = dbContext;
     private readonly ICacheService _cacheService = cacheService;
 
-    public async Task<ErrorOr<Guid>> Handle(CreateMenuItemCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Updated>> Handle(UpdateMenuItemCommand request, CancellationToken cancellationToken)
     {
-        // 1. Validate ParentId (Nếu có truyền lên thì phải tồn tại).
-        MenuItemId? parentId = null;
-        if (request.ParentId.HasValue)
-        {
-            parentId = MenuItemId.Create(request.ParentId.Value);
-            bool parentExists = await _dbContext.MenuItems
-                .AnyAsync(m => m.Id == parentId, cancellationToken);
+        var menuItemId = MenuItemId.Create(request.Id);
+        var menuItem = await _dbContext.MenuItems
+            .Include(m => m.Permissions)
+            .FirstOrDefaultAsync(x => x.Id == menuItemId, cancellationToken);
 
-            if (!parentExists)
-            {
-                return Errors.Menu.ParentNotFound;
-            }
+        if (menuItem is null)
+        {
+            return Errors.Menu.NotFound;
         }
 
-        // 2. Tạo ValueObject Config.
+        // Tạo ValueObject Config mới.
         var config = MenuItemConfig.Create(
             request.Type,
             request.Path,
@@ -46,15 +41,15 @@ public class CreateMenuItemCommandHandler(
             request.CheckRoutes,
             request.RelatedPaths);
 
-        // 3. Tạo Entity MenuItem.
-        var menuItem = MenuItem.Create(
+        // Gọi method Update trong Domain.
+        menuItem.Update(
             request.Label,
-            request.SortOrder,
+            menuItem.SortOrder,
             config,
-            parentId);
+            menuItem.ParentId);
 
-        // 4. Gán Permissions.
-        if (request.PermissionIds.Count > 0)
+        // Update Permissions.
+        if (request.PermissionIds is not null)
         {
             var permissionIds = request.PermissionIds
                 .Select(PermissionId.Create)
@@ -63,14 +58,12 @@ public class CreateMenuItemCommandHandler(
             menuItem.UpdatePermissions(permissionIds);
         }
 
-        // 5. Lưu vào DB.
-        await _dbContext.MenuItems.AddAsync(menuItem, cancellationToken);
+        _dbContext.MenuItems.Update(menuItem);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // 6. Xóa Cache Menu (Bắt buộc)
         // Vì menu thay đổi cấu trúc, cần xóa cache để User tải lại menu mới.
         await _cacheService.RemoveByPrefixAsync("app:menu:", cancellationToken);
 
-        return menuItem.Id.Value;
+        return Result.Updated;
     }
 }

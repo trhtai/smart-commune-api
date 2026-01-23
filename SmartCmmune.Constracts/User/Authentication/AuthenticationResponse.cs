@@ -1,8 +1,10 @@
-﻿namespace SmartCommune.Constracts.User.Authentication;
+﻿using SmartCommune.Constracts.User.MenuItems;
+
+namespace SmartCommune.Constracts.User.Authentication;
 
 public record AuthenticationResponse(
     Guid UserId,
     string FullName,
     string AccessToken,
-    List<string> Permissions);
-    //List<MenuItemResponse> Menu);
+    List<string> Permissions,
+    List<MenuItemResponse> Menu);

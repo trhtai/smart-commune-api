@@ -12,9 +12,9 @@ namespace SmartCommune.Application.Services.Manage.MenuItems.Queries.GetAll;
 
 public class GetAllMenuItemsQueryHandler(
     IApplicationDbContext dbContext)
-    : IRequestHandler<GetAllMenuItemsQuery, ErrorOr<List<MenuItemResult>>>
+    : IRequestHandler<GetAllMenuItemsQuery, ErrorOr<List<MenuItemManageResult>>>
 {
-    public async Task<ErrorOr<List<MenuItemResult>>> Handle(GetAllMenuItemsQuery request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<List<MenuItemManageResult>>> Handle(GetAllMenuItemsQuery request, CancellationToken cancellationToken)
     {
         // 1. Load Full Data (Kèm Permissions).
         var allItems = await dbContext.MenuItems
@@ -29,9 +29,9 @@ public class GetAllMenuItemsQueryHandler(
         return tree;
     }
 
-    private List<MenuItemResult> BuildAdminTree(List<MenuItem> flatItems)
+    private List<MenuItemManageResult> BuildAdminTree(List<MenuItem> flatItems)
     {
-        var lookup = flatItems.ToDictionary(x => x.Id, x => new MenuItemResult(
+        var lookup = flatItems.ToDictionary(x => x.Id, x => new MenuItemManageResult(
             x.Id.Value,
             x.Label,
             x.Config.Icon,
@@ -45,7 +45,7 @@ public class GetAllMenuItemsQueryHandler(
             [.. x.Permissions.Select(p => p.PermissionId.Value)],
             []));
 
-        var rootNodes = new List<MenuItemResult>();
+        var rootNodes = new List<MenuItemManageResult>();
 
         foreach (var item in flatItems)
         {

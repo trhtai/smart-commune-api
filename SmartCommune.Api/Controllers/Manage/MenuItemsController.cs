@@ -4,7 +4,7 @@ using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
-using SmartCommune.Application.Services.Manage.MenuItems.Commands.CreateMenuItem;
+using SmartCommune.Application.Services.Manage.MenuItems.Commands.UpdateMenuItem;
 using SmartCommune.Application.Services.Manage.MenuItems.Queries.GetAll;
 using SmartCommune.Constracts.Manage.MenuItems;
 
@@ -31,13 +31,12 @@ public class MenuItemsController(
             HandleProblem);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateMenuItem(CreateMenuItemRequest request)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateMenuItem(Guid id, UpdateMenuItemRequest request)
     {
-        var command = new CreateMenuItemCommand(
+        var command = new UpdateMenuItemCommand(
+            Id: id,
             Label: request.Title,
-            SortOrder: request.SortOrder,
-            ParentId: request.ParentId,
             Type: request.Type,
             Path: request.To,
             Icon: request.Icon,
@@ -49,16 +48,7 @@ public class MenuItemsController(
         var result = await _sender.Send(command);
 
         return result.Match(
-            menuItemId => CreatedAtAction(
-                nameof(GetMenuItem),
-                new { id = menuItemId },
-                new { Id = menuItemId }),
+            _ => NoContent(),
             HandleProblem);
-    }
-
-    [HttpGet("{id:guid}")]
-    public IActionResult GetMenuItem(Guid id)
-    {
-        return Ok(); // Implement logic lấy chi tiết sau
     }
 }

@@ -37,10 +37,10 @@ public class AuthenticationController(
         var result = await _sender.Send(query, HttpContext.RequestAborted);
 
         return result.Match(
-            authResult =>
+            auth =>
             {
-                SetRefreshTokenCookie(authResult.RefreshToken);
-                return Ok(authResult);
+                SetRefreshTokenCookie(auth.RefreshToken);
+                return Ok(_mapper.Map<AuthenticationResponse>(auth));
             },
             HandleProblem);
     }
@@ -49,39 +49,19 @@ public class AuthenticationController(
     [AllowAnonymous]
     public async Task<IActionResult> RefreshToken()
     {
-        // Lấy Refresh Token từ Cookie.
         var refreshToken = Request.Cookies["refreshToken"];
-
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            return Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Refresh Token is missing from cookie.");
-        }
-
-        // Tiến hành Refresh Token.
         var command = new RefreshTokenCommand(refreshToken);
         var result = await _sender.Send(command, HttpContext.RequestAborted);
 
         return result.Match(
-            Ok,
+            auth => Ok(_mapper.Map<AuthenticationResponse>(auth)),
             HandleProblem);
     }
 
     [HttpPost("revoke-token")]
     public async Task<IActionResult> RevokeToken()
     {
-        // Lấy Refresh Token từ Cookie.
         var refreshToken = Request.Cookies["refreshToken"];
-
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            return Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Refresh Token is missing from cookie.");
-        }
-
-        // Tiến hành Revoke Token.
         var command = new RevokeTokenCommand(refreshToken);
         var result = await _sender.Send(command, HttpContext.RequestAborted);
 

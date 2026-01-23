@@ -30,6 +30,12 @@ public class RefreshTokenCommandHandler(
 
     public async Task<ErrorOr<AuthenticationResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
+        // 0. Validate refresh token.
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return Errors.Authentication.InvalidCredentials;
+        }
+
         // 1. Tìm User sở hữu Refresh Token.
         var user = await _dbContext.Users
             .Include(u => u.RefreshTokens)
@@ -83,7 +89,7 @@ public class RefreshTokenCommandHandler(
             user.FullName,
             newAccessToken,
             request.RefreshToken,
-            permissions.ToList(),
+            [.. permissions],
             menu);
     }
 }

@@ -68,7 +68,7 @@ public class SecurityStampMiddleware(RequestDelegate next)
                 // 3. So sánh.
                 if (dbSecurityStamp != tokenSecurityStamp)
                 {
-                    // Nếu khác nhau -> Token cũ không còn giá trị -> Trả về 401.
+                    // Nếu khác nhau -> Token cũ không còn giá trị.
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     await context.Response.WriteAsJsonAsync(new { error = "Vui lòng đăng nhập lại!" });
 

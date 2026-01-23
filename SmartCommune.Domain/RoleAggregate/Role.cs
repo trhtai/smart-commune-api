@@ -58,7 +58,7 @@ public sealed class Role : AggregateRoot<RoleId>
     /// Xóa quyền khỏi Role.
     /// </summary>
     /// <param name="permissionId">Permission Id.</param>
-    public void RevokePermission(PermissionId permissionId)
+    public void RemovePermission(PermissionId permissionId)
     {
         var permission = _permissions.FirstOrDefault(x => x.PermissionId == permissionId);
         if (permission != null)
